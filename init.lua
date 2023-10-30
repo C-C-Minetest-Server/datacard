@@ -96,7 +96,7 @@ local function on_punch(pos, node, puncher, pointed_thing)
 		inv:set_stack("disk",1,"")
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
-				responce_type = "eject",
+				response_type = "eject",
 			})
 		end
 		minetest.swap_node(pos,{name="datacard:diskdrive_empty"})
@@ -109,7 +109,7 @@ local function on_punch(pos, node, puncher, pointed_thing)
 		inv:set_stack("disk",1,disk)
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
-				responce_type = "inject",
+				response_type = "inject",
 			})
 		end
 		minetest.swap_node(pos,{name="datacard:diskdrive_working"})
@@ -140,7 +140,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 			local data = read_data(disk)
 			local used, capacity = get_size(disk)
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
-				responce_type = msg.type,
+				response_type = msg.type,
 				status = true,
 				data = data,
 				used = used,
@@ -148,7 +148,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 			})
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
-				responce_type = msg.type,
+				response_type = msg.type,
 				success = false,
 				error = "NO_DISK"
 			})
@@ -161,28 +161,28 @@ local function on_digiline_receive(pos, _, channel, msg)
 				inv:set_stack("disk",1,stack)
 				local used, capacity = get_size(stack)
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
-					responce_type = msg.type,
+					response_type = msg.type,
 					success = true,
 					used = used,
 					capacity = capacity
 				})
 			else
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
-					responce_type = msg.type,
+					response_type = msg.type,
 					success = false,
 					error = stack
 				})
 			end
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
-				responce_type = msg.type,
+				response_type = msg.type,
 				success = false,
 				error = "NO_DISK"
 			})
 		end
 	else
 		digilines.receptor_send(pos, digilines.rules.default, channel, {
-			responce_type = msg.type,
+			response_type = msg.type,
 			success = false,
 			error = "UNKNOWN_CMD"
 		})

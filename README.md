@@ -11,10 +11,10 @@ A request to the datacard diskdrive must be in table form:
 ```
 
 ### `type = "read"`
-The responce table would be like this:
+The response table would be like this:
 ```lua
 {
-	responce_type = "read",
+	response_type = "read",
 	success = true,
 	data = ..., -- the data of the disk or nil
 	used = 0, -- used datablocks
@@ -25,20 +25,20 @@ The responce table would be like this:
 ### `type = "write"`
 The `data` field is required to store data, use `nil` to clear the data in a datacard.
 
-The responce table would be like this:
+The response table would be like this:
 ```lua
 {
-	responce_type = "write",
+	response_type = "write",
 	success = true,
 	used = 0, -- used datablocks
 	capacity = 800, -- maximum usable datablocks
 }
 ```
 ### Errors
-An error responce is like this:
+An error response is like this:
 ```lua
 {
-	responce_type = "read" or "write",
+	response_type = "read" or "write",
 	success = false,
 	error = "ERROR_CODE",
 }
