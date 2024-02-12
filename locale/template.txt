@@ -1,0 +1,10 @@
+# textdomain: datacard
+
+##[ init.lua ]##
+Datacard Mk1=
+Datacard Mk2=
+Datacard Mk3=
+@1 (@2/@3 Datablock used)=
+Empty Datacard Diskdrive=
+Working Datacard Diskdrive=
+Datacard Diskdrive=

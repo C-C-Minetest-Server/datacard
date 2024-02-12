@@ -1,3 +1,29 @@
+-- datacard/init.lua
+-- Portable data storage for Digilines
+--[[
+	MIT License
+
+	Copyright (c) 2022, 2024  1F616EMO
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+]]
+
 local S = minetest.get_translator("datacard")
 
 local function determine_size(obj)
@@ -8,7 +34,7 @@ local function determine_size(obj)
 		return 1
 	elseif objtype == "table" then
 		local size = 2 -- Table init with 2 size elem
-		for x,y in pairs(obj) do
+		for x, y in pairs(obj) do
 			size = size + 1 -- every key-value pair: 1 size elem
 			size = size + determine_size(x) + determine_size(y)
 		end
@@ -18,12 +44,12 @@ local function determine_size(obj)
 end
 
 local cards = {
-	{"mk1",S("Datacard Mk1"),200},
-	{"mk2",S("Datacard Mk2"),400},
-	{"mk3",S("Datacard Mk3"),800},
+	{ "mk1", S("Datacard Mk1"), 200 },
+	{ "mk2", S("Datacard Mk2"), 400 },
+	{ "mk3", S("Datacard Mk3"), 800 },
 }
-for _,y in pairs(cards) do
-	minetest.register_craftitem("datacard:datacard_" .. y[1],{
+for _, y in pairs(cards) do
+	minetest.register_craftitem("datacard:datacard_" .. y[1], {
 		description = y[2],
 		inventory_image = "datacard_" .. y[1] .. ".png",
 		groups = { datacard_capacity = y[3] },
@@ -32,11 +58,12 @@ for _,y in pairs(cards) do
 	})
 end
 
-local function store_data(itemstack,data)
+local function store_data(itemstack, data)
 	local name = itemstack:get_name()
 	local datasize = determine_size(data)
 	local capacity = minetest.get_item_group(name, "datacard_capacity")
-	local item_description = minetest.registered_items[name] and minetest.registered_items[name].description or "Unknown Datacard"
+	local item_description = minetest.registered_items[name] and minetest.registered_items[name].description or
+		"Unknown Datacard"
 
 	if datasize > capacity then
 		return false, "TOO_BIG"
@@ -51,9 +78,9 @@ local function store_data(itemstack,data)
 	end
 
 	local meta = itemstack:get_meta()
-	meta:set_string("data",serialized_data)
-	meta:set_int("size",datasize)
-	meta:set_string("description",S("@1 (@2/@3 Datablock used)",item_description,datasize,capacity))
+	meta:set_string("data", serialized_data)
+	meta:set_int("size", datasize)
+	meta:set_string("description", S("@1 (@2/@3 Datablock used)", item_description, datasize, capacity))
 	return true, itemstack
 end
 
@@ -63,7 +90,7 @@ local function read_data(itemstack)
 	if serialized_data == "" then
 		return nil
 	end
-	return minetest.deserialize(serialized_data,true)
+	return minetest.deserialize(serialized_data, true)
 end
 
 local function get_size(itemstack)
@@ -78,10 +105,11 @@ end
 local function on_construct(pos)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
-	inv:set_size("disk",1)
-	meta:set_string("formspec","field[channel;Channel;${channel}]")
-	meta:set_string("infotext",S("Empty Datacard Diskdrive"))
+	inv:set_size("disk", 1)
+	meta:set_string("formspec", "field[channel;Channel;${channel}]")
+	meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 end
+
 local function on_punch(pos, node, puncher, pointed_thing)
 	local meta = minetest.get_meta(pos)
 	local channel = meta:get_string("channel")
@@ -90,35 +118,42 @@ local function on_punch(pos, node, puncher, pointed_thing)
 	local puncher_inv = puncher:get_inventory()
 	local itemname = stack:get_name()
 
-	local orig_in_drive = inv:get_stack("disk",1)
-	if orig_in_drive:get_count() ~= 0 and puncher_inv:room_for_item("main",orig_in_drive) then
-		puncher_inv:add_item("main",orig_in_drive)
-		inv:set_stack("disk",1,"")
+	local orig_in_drive = inv:get_stack("disk", 1)
+	if orig_in_drive:get_count() ~= 0 then
+		if puncher_inv:room_for_item("main", orig_in_drive) then
+			puncher_inv:add_item("main", orig_in_drive)
+		else
+			local item = minetest.add_item(pos, orig_in_drive)
+			if not item then return end
+			item:add_velocity(minetest.facedir_to_dir(node.param2) * -2)
+		end
+		inv:set_stack("disk", 1, "")
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = "eject",
 			})
 		end
-		minetest.swap_node(pos,{name="datacard:diskdrive_empty"})
-		meta:set_string("infotext",S("Empty Datacard Diskdrive"))
+		minetest.swap_node(pos, { name = "datacard:diskdrive_empty" })
+		meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 	end
 
-	if orig_in_drive:get_count() == 0 and minetest.get_item_group(itemname, "datacard_capacity") ~= 0 then
+	if minetest.get_item_group(itemname, "datacard_capacity") ~= 0 then
 		local disk = stack:take_item(1)
 		puncher:set_wielded_item(stack)
-		inv:set_stack("disk",1,disk)
+		inv:set_stack("disk", 1, disk)
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = "inject",
 			})
 		end
-		minetest.swap_node(pos,{name="datacard:diskdrive_working"})
-		meta:set_string("infotext",S("Working Datacard Diskdrive"))
+		minetest.swap_node(pos, { name = "datacard:diskdrive_working" })
+		meta:set_string("infotext", S("Working Datacard Diskdrive"))
 	end
 end
+
 local function on_receive_fields(pos, _, fields, sender)
 	local name = sender:get_player_name()
-	if minetest.is_protected(pos, name) and not minetest.check_player_privs(name, {protection_bypass=true}) then
+	if minetest.is_protected(pos, name) and not minetest.check_player_privs(name, { protection_bypass = true }) then
 		minetest.record_protection_violation(pos, name)
 		return
 	end
@@ -126,6 +161,7 @@ local function on_receive_fields(pos, _, fields, sender)
 		minetest.get_meta(pos):set_string("channel", fields.channel)
 	end
 end
+
 local function on_digiline_receive(pos, _, channel, msg)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
@@ -135,7 +171,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 	if type(msg) ~= "table" then return end
 	local msgtype = string.lower(msg.type or "")
 	if msgtype == "read" then
-		local disk = inv:get_stack("disk",1)
+		local disk = inv:get_stack("disk", 1)
 		if disk:get_count() ~= 0 then
 			local data = read_data(disk)
 			local used, capacity = get_size(disk)
@@ -144,51 +180,93 @@ local function on_digiline_receive(pos, _, channel, msg)
 				status = true,
 				data = data,
 				used = used,
-				capacity = capacity
+				capacity = capacity,
+
+				id = msg.id,
 			})
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
 				success = false,
-				error = "NO_DISK"
+				error = "NO_DISK",
+
+				id = msg.id,
 			})
 		end
 	elseif msgtype == "write" then
-		local disk = inv:get_stack("disk",1)
+		local disk = inv:get_stack("disk", 1)
 		if disk:get_count() ~= 0 then
-			local status, stack = store_data(disk,msg.data)
+			local status, stack = store_data(disk, msg.data)
 			if status then
-				inv:set_stack("disk",1,stack)
+				inv:set_stack("disk", 1, stack)
 				local used, capacity = get_size(stack)
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
 					responce_type = msg.type,
 					success = true,
 					used = used,
-					capacity = capacity
+					capacity = capacity,
+
+					id = msg.id,
 				})
 			else
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
 					responce_type = msg.type,
 					success = false,
-					error = stack
+					error = stack,
+
+					id = msg.id,
 				})
 			end
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
 				success = false,
-				error = "NO_DISK"
+				error = "NO_DISK",
+
+				id = msg.id,
+			})
+		end
+	elseif msgtype == "eject" then
+		local disk = inv:get_stack("disk", 1)
+		print(disk)
+		if disk:get_count() ~= 0 then
+			local item = minetest.add_item(pos, disk)
+			if not item then return end
+			local node = minetest.get_node(pos)
+			item:add_velocity(minetest.facedir_to_dir(node.param2) * -2)
+
+			inv:set_stack("disk", 1, "")
+
+			if setchan ~= "" then
+				digilines.receptor_send(pos, digilines.rules.default, setchan, {
+					responce_type = "eject",
+
+					id = msg.id,
+				})
+			end
+
+			minetest.swap_node(pos, { name = "datacard:diskdrive_empty" })
+			meta:set_string("infotext", S("Empty Datacard Diskdrive"))
+		else
+			digilines.receptor_send(pos, digilines.rules.default, channel, {
+				responce_type = msg.type,
+				success = false,
+				error = "NO_DISK",
+
+				id = msg.id,
 			})
 		end
 	else
 		digilines.receptor_send(pos, digilines.rules.default, channel, {
 			responce_type = msg.type,
 			success = false,
-			error = "UNKNOWN_CMD"
+			error = "UNKNOWN_CMD",
+
+			id = msg.id,
 		})
 	end
 end
-local function can_dig(pos,player)
+local function can_dig(pos, player)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 	return inv:is_empty("disk")
@@ -198,12 +276,12 @@ local function on_place(itemstack, placer, pointed_thing)
 end
 
 
-minetest.register_node("datacard:diskdrive_empty",{
+minetest.register_node("datacard:diskdrive_empty", {
 	description = S("Datacard Diskdrive"),
 	tiles = { -- +Y, -Y, +X, -X, +Z, -Z
-		"device_terminal_top.png","device_terminal_top.png",
-		"device_computer_side.png","device_computer_side.png",
-		"device_computer_side.png","device_diskdrive_front_on_1.png"
+		"device_terminal_top.png", "device_terminal_top.png",
+		"device_computer_side.png", "device_computer_side.png",
+		"device_computer_side.png", "device_diskdrive_front_on_1.png"
 	},
 	on_construct = on_construct,
 	on_punch = on_punch,
@@ -214,19 +292,19 @@ minetest.register_node("datacard:diskdrive_empty",{
 			action = on_digiline_receive
 		},
 	},
-	groups = {cracky = 1, level = 2},
+	groups = { cracky = 1, level = 2 },
 	sounds = default.node_sound_metal_defaults(),
 	can_dig = can_dig,
 	on_place = on_place,
 	paramtype2 = "facedir",
 })
 
-minetest.register_node("datacard:diskdrive_working",{
+minetest.register_node("datacard:diskdrive_working", {
 	description = S("Datacard Diskdrive") .. " (You Hacker You!)",
 	tiles = { -- +Y, -Y, +X, -X, +Z, -Z
-		"device_terminal_top.png","device_terminal_top.png",
-		"device_computer_side.png","device_computer_side.png",
-		"device_computer_side.png","device_diskdrive_front_on_2.png"
+		"device_terminal_top.png", "device_terminal_top.png",
+		"device_computer_side.png", "device_computer_side.png",
+		"device_computer_side.png", "device_diskdrive_front_on_2.png"
 	},
 	on_construct = on_construct,
 	on_punch = on_punch,
@@ -237,7 +315,7 @@ minetest.register_node("datacard:diskdrive_working",{
 			action = on_digiline_receive
 		},
 	},
-	groups = {cracky = 1, level = 2, not_in_creative_inventory = 1 },
+	groups = { cracky = 1, level = 2, not_in_creative_inventory = 1 },
 	drop = "datacard:diskdrive_empty",
 	sounds = default.node_sound_metal_defaults(),
 	can_dig = can_dig,
@@ -249,41 +327,41 @@ minetest.register_node("datacard:diskdrive_working",{
 if minetest.get_modpath("technic") then
 	minetest.register_craft({
 		recipe = {
-			{"default:tin_ingot","","default:tin_ingot"},
-			{"default:tin_ingot","technic:control_logic_unit","default:tin_ingot"},
-			{"default:tin_ingot","digilines:wire_std_00000000","default:tin_ingot"},
+			{ "default:tin_ingot", "",                            "default:tin_ingot" },
+			{ "default:tin_ingot", "technic:control_logic_unit",  "default:tin_ingot" },
+			{ "default:tin_ingot", "digilines:wire_std_00000000", "default:tin_ingot" },
 		},
 		output = "datacard:datacard_mk1"
 	})
 	minetest.register_craft({
 		type = "shapeless",
-		recipe = {"datacard:datacard_mk1","datacard:datacard_mk1"},
+		recipe = { "datacard:datacard_mk1", "datacard:datacard_mk1" },
 		output = "datacard:datacard_mk2"
 	})
 	minetest.register_craft({
 		type = "shapeless",
-		recipe = {"datacard:datacard_mk2","datacard:datacard_mk2"},
+		recipe = { "datacard:datacard_mk2", "datacard:datacard_mk2" },
 		output = "datacard:datacard_mk3"
 	})
 	minetest.register_craft({
 		type = "shapeless",
-		recipe = {"datacard:datacard_mk1","datacard:datacard_mk1","datacard:datacard_mk1","datacard:datacard_mk1"},
+		recipe = { "datacard:datacard_mk1", "datacard:datacard_mk1", "datacard:datacard_mk1", "datacard:datacard_mk1" },
 		output = "datacard:datacard_mk3"
 	})
 
-	for _,y in ipairs({"mesecons_luacontroller:luacontroller0000","mesecons_microcontroller:microcontroller0000"}) do
+	for _, y in ipairs({ "mesecons_luacontroller:luacontroller0000", "mesecons_microcontroller:microcontroller0000" }) do
 		if minetest.registered_nodes[y] then
 			local groups = table.copy(minetest.registered_nodes[y].groups or {})
 			groups.datacard_craft_controller = 1
-			minetest.override_item(y,{groups=groups})
+			minetest.override_item(y, { groups = groups })
 		end
 	end
 
 	minetest.register_craft({
 		recipe = {
-			{"default:tin_ingot","","default:tin_ingot"},
-			{"default:tin_ingot","group:datacard_craft_controller","default:tin_ingot"},
-			{"default:tin_ingot","digilines:wire_std_00000000","default:tin_ingot"},
+			{ "default:tin_ingot", "",                                "default:tin_ingot" },
+			{ "default:tin_ingot", "group:datacard_craft_controller", "default:tin_ingot" },
+			{ "default:tin_ingot", "digilines:wire_std_00000000",     "default:tin_ingot" },
 		},
 		output = "datacard:diskdrive_empty"
 	})
