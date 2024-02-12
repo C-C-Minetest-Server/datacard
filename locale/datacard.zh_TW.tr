@@ -1,0 +1,10 @@
+# textdomain: datacard
+
+##[ init.lua ]##
+Datacard Mk1=1型資料卡
+Datacard Mk2=2型資料卡
+Datacard Mk3=3型資料卡
+@1 (@2/@3 Datablock used)=@1（已使用 @2/@3 個資料塊）
+Empty Datacard Diskdrive=空資料卡讀卡器
+Working Datacard Diskdrive=使用中的資料卡讀卡器
+Datacard Diskdrive=資料卡讀卡器
