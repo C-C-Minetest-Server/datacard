@@ -117,9 +117,14 @@ local function on_punch(pos, node, puncher, pointed_thing)
 	local stack = puncher:get_wielded_item()
 	local puncher_inv = puncher:get_inventory()
 	local itemname = stack:get_name()
+	local pname = puncher:get_player_name()
 
 	local orig_in_drive = inv:get_stack("disk", 1)
 	if orig_in_drive:get_count() ~= 0 then
+		if minetest.is_protected(pos, pname) and not minetest.check_player_privs(pname, { protection_bypass = true }) then
+			minetest.record_protection_violation(pos, pname)
+			return
+		end
 		if puncher_inv:room_for_item("main", orig_in_drive) then
 			puncher_inv:add_item("main", orig_in_drive)
 		else
@@ -133,11 +138,16 @@ local function on_punch(pos, node, puncher, pointed_thing)
 				responce_type = "eject",
 			})
 		end
-		minetest.swap_node(pos, { name = "datacard:diskdrive_empty" })
+		node.name = "datacard:diskdrive_empty"
+		minetest.swap_node(pos, node)
 		meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 	end
 
 	if minetest.get_item_group(itemname, "datacard_capacity") ~= 0 then
+		if minetest.is_protected(pos, pname) and not minetest.check_player_privs(pnamename, { protection_bypass = true }) then
+			minetest.record_protection_violation(pos, pname)
+			return
+		end
 		local disk = stack:take_item(1)
 		puncher:set_wielded_item(stack)
 		inv:set_stack("disk", 1, disk)
@@ -146,7 +156,8 @@ local function on_punch(pos, node, puncher, pointed_thing)
 				responce_type = "inject",
 			})
 		end
-		minetest.swap_node(pos, { name = "datacard:diskdrive_working" })
+		node.name = "datacard:diskdrive_working"
+		minetest.swap_node(pos, node)
 		meta:set_string("infotext", S("Working Datacard Diskdrive"))
 	end
 end
