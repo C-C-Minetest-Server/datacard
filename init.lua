@@ -24,7 +24,7 @@
 	SOFTWARE.
 ]]
 
-local S = minetest.get_translator("datacard")
+local S = core.get_translator("datacard")
 
 local function determine_size(obj)
 	local objtype = type(obj)
@@ -49,7 +49,7 @@ local cards = {
 	{ "mk3", S("Datacard Mk3"), 800 },
 }
 for _, y in pairs(cards) do
-	minetest.register_craftitem("datacard:datacard_" .. y[1], {
+	core.register_craftitem("datacard:datacard_" .. y[1], {
 		description = y[2],
 		inventory_image = "datacard_" .. y[1] .. ".png",
 		groups = { datacard_capacity = y[3] },
@@ -61,17 +61,17 @@ end
 local function store_data(itemstack, data)
 	local name = itemstack:get_name()
 	local datasize = determine_size(data)
-	local capacity = minetest.get_item_group(name, "datacard_capacity")
-	local item_description = minetest.registered_items[name] and minetest.registered_items[name].description or
+	local capacity = core.get_item_group(name, "datacard_capacity")
+	local item_description = core.registered_items[name] and core.registered_items[name].description or
 		"Unknown Datacard"
 
 	if datasize > capacity then
 		return false, "TOO_BIG"
 	end
 
-	local serialized_data = minetest.serialize(data)
+	local serialized_data = core.serialize(data)
 	if data then -- check
-		local check_data = minetest.deserialize(serialized_data)
+		local check_data = core.deserialize(serialized_data)
 		if not check_data then
 			return false, "ERR_SERIALIZE"
 		end
@@ -90,20 +90,20 @@ local function read_data(itemstack)
 	if serialized_data == "" then
 		return nil
 	end
-	return minetest.deserialize(serialized_data, true)
+	return core.deserialize(serialized_data, true)
 end
 
 local function get_size(itemstack)
 	local name = itemstack:get_name()
 	local meta = itemstack:get_meta()
 	local datasize = meta:get_int("size")
-	local capacity = minetest.get_item_group(name, "datacard_capacity")
+	local capacity = core.get_item_group(name, "datacard_capacity")
 	return datasize, capacity
 end
 
 -- Diskdrive
 local function on_construct(pos)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local inv = meta:get_inventory()
 	inv:set_size("disk", 1)
 	meta:set_string("formspec", "field[channel;Channel;${channel}]")
@@ -111,7 +111,7 @@ local function on_construct(pos)
 end
 
 local function on_punch(pos, node, puncher, pointed_thing)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local channel = meta:get_string("channel")
 	local inv = meta:get_inventory()
 	local stack = puncher:get_wielded_item()
@@ -121,16 +121,16 @@ local function on_punch(pos, node, puncher, pointed_thing)
 
 	local orig_in_drive = inv:get_stack("disk", 1)
 	if orig_in_drive:get_count() ~= 0 then
-		if minetest.is_protected(pos, pname) and not minetest.check_player_privs(pname, { protection_bypass = true }) then
-			minetest.record_protection_violation(pos, pname)
+		if core.is_protected(pos, pname) and not core.check_player_privs(pname, { protection_bypass = true }) then
+			core.record_protection_violation(pos, pname)
 			return
 		end
 		if puncher_inv:room_for_item("main", orig_in_drive) then
 			puncher_inv:add_item("main", orig_in_drive)
 		else
-			local item = minetest.add_item(pos, orig_in_drive)
+			local item = core.add_item(pos, orig_in_drive)
 			if not item then return end
-			item:add_velocity(minetest.facedir_to_dir(node.param2) * -2)
+			item:add_velocity(core.facedir_to_dir(node.param2) * -2)
 		end
 		inv:set_stack("disk", 1, "")
 		if channel ~= "" then
@@ -139,13 +139,13 @@ local function on_punch(pos, node, puncher, pointed_thing)
 			})
 		end
 		node.name = "datacard:diskdrive_empty"
-		minetest.swap_node(pos, node)
+		core.swap_node(pos, node)
 		meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 	end
 
-	if minetest.get_item_group(itemname, "datacard_capacity") ~= 0 then
-		if minetest.is_protected(pos, pname) and not minetest.check_player_privs(pnamename, { protection_bypass = true }) then
-			minetest.record_protection_violation(pos, pname)
+	if core.get_item_group(itemname, "datacard_capacity") ~= 0 then
+		if core.is_protected(pos, pname) and not core.check_player_privs(pnamename, { protection_bypass = true }) then
+			core.record_protection_violation(pos, pname)
 			return
 		end
 		local disk = stack:take_item(1)
@@ -157,24 +157,24 @@ local function on_punch(pos, node, puncher, pointed_thing)
 			})
 		end
 		node.name = "datacard:diskdrive_working"
-		minetest.swap_node(pos, node)
+		core.swap_node(pos, node)
 		meta:set_string("infotext", S("Working Datacard Diskdrive"))
 	end
 end
 
 local function on_receive_fields(pos, _, fields, sender)
 	local name = sender:get_player_name()
-	if minetest.is_protected(pos, name) and not minetest.check_player_privs(name, { protection_bypass = true }) then
-		minetest.record_protection_violation(pos, name)
+	if core.is_protected(pos, name) and not core.check_player_privs(name, { protection_bypass = true }) then
+		core.record_protection_violation(pos, name)
 		return
 	end
 	if (fields.channel) then
-		minetest.get_meta(pos):set_string("channel", fields.channel)
+		core.get_meta(pos):set_string("channel", fields.channel)
 	end
 end
 
 local function on_digiline_receive(pos, _, channel, msg)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local inv = meta:get_inventory()
 	local setchan = meta:get_string("channel")
 	if setchan ~= channel then return end
@@ -241,10 +241,10 @@ local function on_digiline_receive(pos, _, channel, msg)
 		local disk = inv:get_stack("disk", 1)
 		print(disk)
 		if disk:get_count() ~= 0 then
-			local item = minetest.add_item(pos, disk)
+			local item = core.add_item(pos, disk)
 			if not item then return end
-			local node = minetest.get_node(pos)
-			item:add_velocity(minetest.facedir_to_dir(node.param2) * -2)
+			local node = core.get_node(pos)
+			item:add_velocity(core.facedir_to_dir(node.param2) * -2)
 
 			inv:set_stack("disk", 1, "")
 
@@ -256,7 +256,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 				})
 			end
 
-			minetest.swap_node(pos, { name = "datacard:diskdrive_empty" })
+			core.swap_node(pos, { name = "datacard:diskdrive_empty" })
 			meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
@@ -278,16 +278,16 @@ local function on_digiline_receive(pos, _, channel, msg)
 	end
 end
 local function can_dig(pos, player)
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local inv = meta:get_inventory()
 	return inv:is_empty("disk")
 end
 local function on_place(itemstack, placer, pointed_thing)
-	return minetest.rotate_and_place(itemstack, placer, pointed_thing, false, "force_floor")
+	return core.rotate_and_place(itemstack, placer, pointed_thing, false, "force_floor")
 end
 
 
-minetest.register_node("datacard:diskdrive_empty", {
+core.register_node("datacard:diskdrive_empty", {
 	description = S("Datacard Diskdrive"),
 	tiles = { -- +Y, -Y, +X, -X, +Z, -Z
 		"device_terminal_top.png", "device_terminal_top.png",
@@ -310,7 +310,7 @@ minetest.register_node("datacard:diskdrive_empty", {
 	paramtype2 = "facedir",
 })
 
-minetest.register_node("datacard:diskdrive_working", {
+core.register_node("datacard:diskdrive_working", {
 	description = S("Datacard Diskdrive") .. " (You Hacker You!)",
 	tiles = { -- +Y, -Y, +X, -X, +Z, -Z
 		"device_terminal_top.png", "device_terminal_top.png",
@@ -335,8 +335,8 @@ minetest.register_node("datacard:diskdrive_working", {
 })
 
 -- Crafting
-if minetest.get_modpath("technic") then
-	minetest.register_craft({
+if core.get_modpath("technic") then
+	core.register_craft({
 		recipe = {
 			{ "default:tin_ingot", "",                            "default:tin_ingot" },
 			{ "default:tin_ingot", "technic:control_logic_unit",  "default:tin_ingot" },
@@ -344,31 +344,31 @@ if minetest.get_modpath("technic") then
 		},
 		output = "datacard:datacard_mk1"
 	})
-	minetest.register_craft({
+	core.register_craft({
 		type = "shapeless",
 		recipe = { "datacard:datacard_mk1", "datacard:datacard_mk1" },
 		output = "datacard:datacard_mk2"
 	})
-	minetest.register_craft({
+	core.register_craft({
 		type = "shapeless",
 		recipe = { "datacard:datacard_mk2", "datacard:datacard_mk2" },
 		output = "datacard:datacard_mk3"
 	})
-	minetest.register_craft({
+	core.register_craft({
 		type = "shapeless",
 		recipe = { "datacard:datacard_mk1", "datacard:datacard_mk1", "datacard:datacard_mk1", "datacard:datacard_mk1" },
 		output = "datacard:datacard_mk3"
 	})
 
 	for _, y in ipairs({ "mesecons_luacontroller:luacontroller0000", "mesecons_microcontroller:microcontroller0000" }) do
-		if minetest.registered_nodes[y] then
-			local groups = table.copy(minetest.registered_nodes[y].groups or {})
+		if core.registered_nodes[y] then
+			local groups = table.copy(core.registered_nodes[y].groups or {})
 			groups.datacard_craft_controller = 1
-			minetest.override_item(y, { groups = groups })
+			core.override_item(y, { groups = groups })
 		end
 	end
 
-	minetest.register_craft({
+	core.register_craft({
 		recipe = {
 			{ "default:tin_ingot", "",                                "default:tin_ingot" },
 			{ "default:tin_ingot", "group:datacard_craft_controller", "default:tin_ingot" },
