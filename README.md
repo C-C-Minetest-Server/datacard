@@ -4,23 +4,25 @@ So here is the Datacard mod, SSD for Digiline! There are three types of datacard
 
 ## Messages sent by the diskdrive
 
-### `responce_type = "inject"`
+Note that the field `responce_type` have been renamed to `response_type`. The old one is deprecated, but will still be functional.
+
+### `response_type = "inject"`
 
 Sent when a datacard is injected into a diskdrive.
 
 ```lua
 {
-	responce_type = "inject",
+	response_type = "inject",
 }
 ```
 
-### `responce_type = "eject"`
+### `response_type = "eject"`
 
 Sent when a datacard is ejected, either because a user punched it, or [requested by another digiline signal](#type--eject).
 
 ```lua
 {
-	responce_type = "eject",
+	response_type = "eject",
 	id = ..., -- Only when requested via digiline
 }
 ```
@@ -45,7 +47,7 @@ The responce table would be like this:
 
 ```lua
 {
-	responce_type = "read",
+	response_type = "read",
 	success = true,
 	data = ..., -- the data of the disk or nil
 	used = 0, -- used datablocks
@@ -61,7 +63,7 @@ The responce table would be like this:
 
 ```lua
 {
-	responce_type = "write",
+	response_type = "write",
 	success = true,
 	used = 0, -- used datablocks
 	capacity = 800, -- maximum usable datablocks
@@ -80,7 +82,7 @@ An error responce is like this:
 
 ```lua
 {
-	responce_type = "read" or "write",
+	response_type = "read" or "write",
 	success = false,
 	error = "ERROR_CODE",
 }

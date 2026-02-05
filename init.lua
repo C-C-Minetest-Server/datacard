@@ -136,6 +136,7 @@ local function on_punch(pos, node, puncher, pointed_thing)
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = "eject",
+				response_type = "eject",
 			})
 		end
 		node.name = "datacard:diskdrive_empty"
@@ -154,6 +155,7 @@ local function on_punch(pos, node, puncher, pointed_thing)
 		if channel ~= "" then
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = "inject",
+				response_type = "inject",
 			})
 		end
 		node.name = "datacard:diskdrive_working"
@@ -188,6 +190,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 			local used, capacity = get_size(disk)
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
+				response_type = msg.type,
 				status = true,
 				data = data,
 				used = used,
@@ -198,6 +201,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
+				response_type = msg.type,
 				success = false,
 				error = "NO_DISK",
 
@@ -213,6 +217,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 				local used, capacity = get_size(stack)
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
 					responce_type = msg.type,
+					response_type = msg.type,
 					success = true,
 					used = used,
 					capacity = capacity,
@@ -222,6 +227,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 			else
 				digilines.receptor_send(pos, digilines.rules.default, channel, {
 					responce_type = msg.type,
+					response_type = msg.type,
 					success = false,
 					error = stack,
 
@@ -231,6 +237,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
+				response_type = msg.type,
 				success = false,
 				error = "NO_DISK",
 
@@ -251,6 +258,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 			if setchan ~= "" then
 				digilines.receptor_send(pos, digilines.rules.default, setchan, {
 					responce_type = "eject",
+					response_type = "eject",
 
 					id = msg.id,
 				})
@@ -261,6 +269,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 		else
 			digilines.receptor_send(pos, digilines.rules.default, channel, {
 				responce_type = msg.type,
+				response_type = msg.type,
 				success = false,
 				error = "NO_DISK",
 
@@ -270,6 +279,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 	else
 		digilines.receptor_send(pos, digilines.rules.default, channel, {
 			responce_type = msg.type,
+			response_type = msg.type,
 			success = false,
 			error = "UNKNOWN_CMD",
 
