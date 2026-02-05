@@ -110,7 +110,7 @@ local function on_construct(pos)
 	meta:set_string("infotext", S("Empty Datacard Diskdrive"))
 end
 
-local function on_punch(pos, node, puncher, pointed_thing)
+local function on_punch(pos, node, puncher)
 	local meta = core.get_meta(pos)
 	local channel = meta:get_string("channel")
 	local inv = meta:get_inventory()
@@ -145,7 +145,7 @@ local function on_punch(pos, node, puncher, pointed_thing)
 	end
 
 	if core.get_item_group(itemname, "datacard_capacity") ~= 0 then
-		if core.is_protected(pos, pname) and not core.check_player_privs(pnamename, { protection_bypass = true }) then
+		if core.is_protected(pos, pname) and not core.check_player_privs(pname, { protection_bypass = true }) then
 			core.record_protection_violation(pos, pname)
 			return
 		end
@@ -287,7 +287,7 @@ local function on_digiline_receive(pos, _, channel, msg)
 		})
 	end
 end
-local function can_dig(pos, player)
+local function can_dig(pos)
 	local meta = core.get_meta(pos)
 	local inv = meta:get_inventory()
 	return inv:is_empty("disk")

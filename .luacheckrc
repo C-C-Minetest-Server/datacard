@@ -1,8 +1,10 @@
 read_globals = {
-    "DIR_DELIM", "INIT",
+    "DIR_DELIM",
+    "INIT",
 
-`   "core",
-    "dump", "dump2",
+    "core",
+    "dump",
+    "dump2",
 
     "Raycast",
     "Settings",
@@ -19,6 +21,7 @@ read_globals = {
     "vector",
 
     "digilines",
+    "default",
 
     table = {
         fields = {
